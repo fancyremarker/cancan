@@ -102,9 +102,17 @@ module CanCan
         elsif @model_class.respond_to?(:where) && @model_class.respond_to?(:joins)
           mergeable_conditions = @rules.select {|rule| rule.unmergeable? }.blank?
           if mergeable_conditions
-            @model_class.where(conditions).joins(joins)
+            if @model_class.respond_to?(:references)
+              @model_class.where(conditions).includes(joins).references(joins)
+            else
+              @model_class.where(conditions).joins(joins)
+            end
           else
-            @model_class.where(*(@rules.map(&:conditions))).joins(joins)
+            if @model_class.respond_to?(:references)
+              @model_class.where(*(@rules.map(&:conditions))).includes(joins).references(joins)
+            else
+              @model_class.where(*(@rules.map(&:conditions))).joins(joins)
+            end
           end
         else
           @model_class.scoped(:conditions => conditions, :joins => joins)
